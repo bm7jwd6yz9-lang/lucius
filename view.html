@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Lucius — Shared Episode</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css?v=3">
+</head>
+<body>
+    <div class="geometric-bg"></div>
+
+    <div class="app">
+        <header class="header">
+            <div class="header-left">
+                <div class="logo-mark">
+                    <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="18" cy="18" r="17" stroke="url(#logoGrad)" stroke-width="1.5"/>
+                        <path d="M18 8L22 14H14L18 8Z" fill="url(#logoGrad)"/>
+                        <circle cx="18" cy="21" r="5" stroke="url(#logoGrad)" stroke-width="1.2"/>
+                        <defs>
+                            <linearGradient id="logoGrad" x1="4" y1="4" x2="32" y2="32">
+                                <stop stop-color="#C4956A"/>
+                                <stop offset="1" stop-color="#A67C52"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+                <h1 class="logo-text">Lucius</h1>
+            </div>
+        </header>
+
+        <main class="tab-content active">
+            <div class="create-container">
+                <div class="section-header">
+                    <h2 id="episodeTitle">Loading...</h2>
+                    <p id="episodeDate"></p>
+                </div>
+
+                <div id="scriptOutput" class="script-output" style="cursor: default;"></div>
+
+                <div class="playback-controls">
+                    <button id="playBtn" class="play-btn" title="Play">
+                        <svg id="playIcon" viewBox="0 0 24 24" fill="currentColor">
+                            <polygon points="6,3 20,12 6,21"/>
+                        </svg>
+                        <svg id="pauseIcon" viewBox="0 0 24 24" fill="currentColor" class="hidden">
+                            <rect x="5" y="3" width="4" height="18" rx="1"/>
+                            <rect x="15" y="3" width="4" height="18" rx="1"/>
+                        </svg>
+                    </button>
+                    <button id="stopBtn" class="control-btn" title="Stop">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <rect x="5" y="5" width="14" height="14" rx="2"/>
+                        </svg>
+                    </button>
+                    <div class="speed-control">
+                        <label>Speed</label>
+                        <select id="speedSelect">
+                            <option value="0.75">0.75×</option>
+                            <option value="1" selected>1×</option>
+                            <option value="1.25">1.25×</option>
+                            <option value="1.5">1.5×</option>
+                            <option value="2">2×</option>
+                        </select>
+                    </div>
+                    <div class="voice-control">
+                        <label>Voice</label>
+                        <select id="voiceSelect"></select>
+                    </div>
+                </div>
+
+                <p style="text-align: center; margin-top: 32px; font-size: 0.8rem; color: var(--ink-400);">
+                    Shared privately via Lucius — this link isn't listed publicly.
+                </p>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        (function () {
+            'use strict';
+            const $ = (sel) => document.querySelector(sel);
+            const synth = window.speechSynthesis;
+            let currentUtterance = null;
+            let isPlaying = false;
+            let script = '';
+
+            function decodePayload() {
+                const hash = window.location.hash.substring(1);
+                if (!hash) return null;
+                try {
+                    const json = decodeURIComponent(escape(atob(hash)));
+                    return JSON.parse(json);
+                } catch (e) {
+                    return null;
+                }
+            }
+
+            function loadVoices() {
+                const voices = synth.getVoices();
+                const select = $('#voiceSelect');
+                select.innerHTML = '';
+                const preferred = voices.filter(v => v.lang.startsWith('en'));
+                const list = preferred.length ? preferred : voices;
+                list.forEach((voice, i) => {
+                    const opt = document.createElement('option');
+                    opt.value = i;
+                    opt.textContent = `${voice.name} (${voice.lang})`;
+                    opt.dataset.voiceName = voice.name;
+                    select.appendChild(opt);
+                });
+            }
+
+            function showPlayIcon(showPlay) {
+                $('#playIcon').classList.toggle('hidden', !showPlay);
+                $('#pauseIcon').classList.toggle('hidden', showPlay);
+            }
+
+            function togglePlay() {
+                if (!script) return;
+                if (isPlaying) {
+                    synth.pause();
+                    isPlaying = false;
+                    showPlayIcon(true);
+                    return;
+                }
+                if (synth.paused) {
+                    synth.resume();
+                    isPlaying = true;
+                    showPlayIcon(false);
+                    return;
+                }
+                const utterance = new SpeechSynthesisUtterance(script);
+                utterance.rate = parseFloat($('#speedSelect').value);
+                const voices = synth.getVoices();
+                const select = $('#voiceSelect');
+                const selectedOpt = select.options[select.selectedIndex];
+                if (selectedOpt) {
+                    const voice = voices.find(v => v.name === selectedOpt.dataset.voiceName);
+                    if (voice) utterance.voice = voice;
+                }
+                utterance.onend = () => {
+                    isPlaying = false;
+                    showPlayIcon(true);
+                    currentUtterance = null;
+                };
+                currentUtterance = utterance;
+                synth.speak(utterance);
+                isPlaying = true;
+                showPlayIcon(false);
+            }
+
+            function stopPlay() {
+                synth.cancel();
+                isPlaying = false;
+                showPlayIcon(true);
+                currentUtterance = null;
+            }
+
+            document.addEventListener('DOMContentLoaded', () => {
+                const payload = decodePayload();
+                if (!payload) {
+                    $('#episodeTitle').textContent = 'Episode not found';
+                    $('#scriptOutput').textContent = 'This link may be broken or incomplete.';
+                    return;
+                }
+
+                script = payload.s;
+                $('#episodeTitle').textContent = payload.t || 'Untitled Episode';
+                $('#scriptOutput').textContent = script;
+
+                if (payload.d) {
+                    const date = new Date(payload.d);
+                    $('#episodeDate').textContent = date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+                }
+
+                loadVoices();
+                synth.onvoiceschanged = loadVoices;
+
+                $('#playBtn').addEventListener('click', togglePlay);
+                $('#stopBtn').addEventListener('click', stopPlay);
+                $('#speedSelect').addEventListener('change', () => {
+                    if (currentUtterance) currentUtterance.rate = parseFloat($('#speedSelect').value);
+                });
+            });
+        })();
+    </script>
+</body>
+</html>

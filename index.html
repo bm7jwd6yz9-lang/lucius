@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Lucius</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css?v=4">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎙</text></svg>">
+</head>
+<body>
+    <div class="geometric-bg"></div>
+
+    <!-- API Key Modal -->
+    <div id="apiKeyModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-icon">
+                <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="24" cy="24" r="23" stroke="currentColor" stroke-width="1.5"/>
+                    <path d="M24 14v14M24 32v2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+            </div>
+            <h2>Welcome to Lucius</h2>
+            <p class="modal-subtitle">Enter your Anthropic API key to get started. Your key is stored only on this device.</p>
+            <input type="password" id="apiKeyInput" placeholder="sk-ant-..." autocomplete="off">
+            <button id="saveApiKey" class="btn-primary">Continue</button>
+            <a href="https://console.anthropic.com/account/keys" target="_blank" class="modal-link">Get an API key →</a>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="app" class="app hidden">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <div class="logo-mark">
+                    <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="18" cy="18" r="17" stroke="url(#logoGrad)" stroke-width="1.5"/>
+                        <path d="M18 8L22 14H14L18 8Z" fill="url(#logoGrad)"/>
+                        <circle cx="18" cy="21" r="5" stroke="url(#logoGrad)" stroke-width="1.2"/>
+                        <defs>
+                            <linearGradient id="logoGrad" x1="4" y1="4" x2="32" y2="32">
+                                <stop stop-color="#C4956A"/>
+                                <stop offset="1" stop-color="#A67C52"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+                <h1 class="logo-text">Lucius</h1>
+            </div>
+            <div class="header-right">
+                <button id="costTrackerBtn" class="header-btn" title="Usage & Cost">
+                    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <circle cx="10" cy="10" r="8"/>
+                        <path d="M10 6v8M7.5 8.5h4a1.5 1.5 0 010 3H8" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <span id="totalCostBadge" class="cost-badge">$0.00</span>
+                </button>
+                <button id="darkModeBtn" class="header-btn" title="Toggle dark mode">
+                    <svg id="sunIcon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <circle cx="10" cy="10" r="4"/>
+                        <path d="M10 2v2M10 16v2M2 10h2M16 10h2M4.9 4.9l1.4 1.4M13.7 13.7l1.4 1.4M4.9 15.1l1.4-1.4M13.7 6.3l1.4-1.4" stroke-linecap="round"/>
+                    </svg>
+                    <svg id="moonIcon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" class="hidden">
+                        <path d="M17 10.5A7.5 7.5 0 019.5 3 7 7 0 1017 10.5z" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+                <button id="settingsBtn" class="header-btn" title="Settings">
+                    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <circle cx="10" cy="10" r="3"/>
+                        <path d="M10 2v3M10 15v3M2 10h3M15 10h3M4.2 4.2l2.1 2.1M13.7 13.7l2.1 2.1M4.2 15.8l2.1-2.1M13.7 6.3l2.1-2.1" stroke-linecap="round"/>
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="tab-nav">
+            <button class="tab active" data-tab="create">Create</button>
+            <button class="tab" data-tab="episodes">Episodes</button>
+        </nav>
+
+        <!-- Create Tab -->
+        <main id="createTab" class="tab-content active">
+            <div class="create-container">
+                <div class="section-header">
+                    <h2>New Episode</h2>
+                    <p>Type, paste, or record your raw thoughts.</p>
+                </div>
+
+                <!-- Input Area -->
+                <div class="input-area">
+                    <textarea id="rawInput" placeholder="Start typing your thoughts, notes, or ideas here..."></textarea>
+                    <div class="input-actions">
+                        <button id="recordBtn" class="action-btn" title="Record voice">
+                            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <rect x="7" y="2" width="6" height="10" rx="3"/>
+                                <path d="M4 10a6 6 0 0012 0M10 16v2" stroke-linecap="round"/>
+                            </svg>
+                            <span>Record</span>
+                        </button>
+                        <button id="uploadBtn" class="action-btn" title="Upload audio">
+                            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <path d="M10 2v12M6 6l4-4 4 4M3 14v2a2 2 0 002 2h10a2 2 0 002-2v-2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            <span>Upload</span>
+                        </button>
+                        <input type="file" id="audioFileInput" accept="audio/*" hidden>
+                    </div>
+                </div>
+
+                <!-- Recording indicator -->
+                <div id="recordingIndicator" class="recording-indicator hidden">
+                    <div class="recording-dot"></div>
+                    <span>Recording... tap to stop</span>
+                </div>
+
+                <!-- Transcribing indicator -->
+                <div id="transcribingIndicator" class="processing-indicator hidden">
+                    <div class="spinner"></div>
+                    <span>Transcribing audio...</span>
+                </div>
+
+                <!-- Transform Button -->
+                <button id="transformBtn" class="btn-transform" disabled>
+                    <span class="btn-text">Transform into Podcast</span>
+                    <div class="btn-loader hidden">
+                        <div class="spinner"></div>
+                        <span>Claude is writing your script...</span>
+                    </div>
+                </button>
+
+                <!-- Output Area -->
+                <div id="outputArea" class="output-area hidden">
+                    <div class="output-header">
+                        <h3>Your Podcast Script</h3>
+                        <div class="output-meta">
+                            <span id="episodeCost" class="cost-pill"></span>
+                        </div>
+                    </div>
+                    <div id="scriptOutput" class="script-output" contenteditable="true" spellcheck="true"></div>
+                    <p class="script-output-hint">Click the script above to edit it before saving or playing.</p>
+
+                    <!-- Playback Controls -->
+                    <div class="playback-controls">
+                        <button id="playBtn" class="play-btn" title="Play">
+                            <svg id="playIcon" viewBox="0 0 24 24" fill="currentColor">
+                                <polygon points="6,3 20,12 6,21"/>
+                            </svg>
+                            <svg id="pauseIcon" viewBox="0 0 24 24" fill="currentColor" class="hidden">
+                                <rect x="5" y="3" width="4" height="18" rx="1"/>
+                                <rect x="15" y="3" width="4" height="18" rx="1"/>
+                            </svg>
+                        </button>
+                        <button id="stopBtn" class="control-btn" title="Stop">
+                            <svg viewBox="0 0 24 24" fill="currentColor">
+                                <rect x="5" y="5" width="14" height="14" rx="2"/>
+                            </svg>
+                        </button>
+                        <div class="speed-control">
+                            <label>Speed</label>
+                            <select id="speedSelect">
+                                <option value="0.75">0.75×</option>
+                                <option value="1" selected>1×</option>
+                                <option value="1.25">1.25×</option>
+                                <option value="1.5">1.5×</option>
+                                <option value="2">2×</option>
+                            </select>
+                        </div>
+                        <div class="voice-control">
+                            <label>Voice</label>
+                            <select id="voiceSelect"></select>
+                        </div>
+                    </div>
+
+                    <!-- Save Actions -->
+                    <div class="save-actions">
+                        <button id="saveEpisodeBtn" class="btn-primary">Save Episode</button>
+                        <button id="downloadBtn" class="btn-secondary">Download Script</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Episodes Tab -->
+        <main id="episodesTab" class="tab-content">
+            <div class="episodes-container">
+                <div class="section-header">
+                    <h2>Your Episodes</h2>
+                    <p>All your saved podcast scripts.</p>
+                </div>
+                <div id="episodesList" class="episodes-list">
+                    <div class="empty-state">
+                        <div class="empty-icon">
+                            <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.2">
+                                <circle cx="24" cy="24" r="20"/>
+                                <path d="M24 14v10l6 4" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                        <p>No episodes yet. Create your first one.</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Settings Panel -->
+        <div id="settingsPanel" class="settings-panel hidden">
+            <div class="settings-header">
+                <h3>Settings</h3>
+                <button id="closeSettings" class="close-btn">✕</button>
+            </div>
+            <div class="settings-body">
+                <div class="setting-item">
+                    <label>API Key</label>
+                    <div class="setting-row">
+                        <input type="password" id="settingsApiKey" placeholder="sk-ant-...">
+                        <button id="updateApiKey" class="btn-small">Update</button>
+                    </div>
+                </div>
+                <div class="setting-item">
+                    <label>Podcast Style</label>
+                    <select id="podcastStyle">
+                        <option value="conversational">Conversational</option>
+                        <option value="professional">Professional / News</option>
+                        <option value="storytelling">Storytelling</option>
+                        <option value="educational">Educational</option>
+                    </select>
+                </div>
+                <div class="setting-item">
+                    <label>Episode Length</label>
+                    <select id="episodeLength">
+                        <option value="brief">Brief (1-2 min)</option>
+                        <option value="short">Short (2-3 min)</option>
+                        <option value="medium" selected>Medium (5-7 min)</option>
+                        <option value="long">Long (10+ min)</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cost Tracker Panel -->
+        <div id="costPanel" class="settings-panel hidden">
+            <div class="settings-header">
+                <h3>Usage & Cost</h3>
+                <button id="closeCost" class="close-btn">✕</button>
+            </div>
+            <div class="settings-body">
+                <div class="cost-summary">
+                    <div class="cost-card">
+                        <span class="cost-label">Total Spent</span>
+                        <span id="totalSpent" class="cost-value">$0.0000</span>
+                    </div>
+                    <div class="cost-card">
+                        <span class="cost-label">Episodes Created</span>
+                        <span id="totalEpisodes" class="cost-value">0</span>
+                    </div>
+                    <div class="cost-card">
+                        <span class="cost-label">Avg. Cost / Episode</span>
+                        <span id="avgCost" class="cost-value">$0.0000</span>
+                    </div>
+                </div>
+                <h4>Cost History</h4>
+                <div id="costHistory" class="cost-history"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js?v=4"></script>
+</body>
+</html>
